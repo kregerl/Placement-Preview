@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "id": "placementpreview",
+  "version": "${version}",
+
+  "name": "Placement Preview",
+  "description": "See a translucent block of what you're holding before you place it!",
+  "authors": [
+    "AreUThreateningMe"
+  ],
+  "contact": {
+    "homepage": "https://www.curseforge.com/minecraft/mc-mods/placement-preview-forge-fabric",
+    "sources": "https://github.com/kregerl/Placement-Preview"
+  },
+
+  "license": "MIT",
+  "icon": "assets/placementpreview/Logo.png",
+
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.loucaskreger.placementpreview.PlacementPreview"
+    ]
+  },
+  "mixins": [
+    "placementpreview.mixins.json"
+  ],
+
+  "depends": {
+    "fabricloader": ">=0.11.3",
+    "fabric": "*",
+    "minecraft": "1.17.x",
+    "java": ">=16"
+  },
+  "suggests": {
+    "another-mod": "*"
+  }
+}
