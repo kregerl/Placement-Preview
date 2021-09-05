@@ -4,14 +4,18 @@ import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.minecraft.block.*;
 import net.minecraft.block.entity.BannerBlockEntity;
 import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.block.enums.BedPart;
+import net.minecraft.block.enums.DoubleBlockHalf;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.TexturedRenderLayers;
-import net.minecraft.client.render.block.entity.BannerBlockEntityRenderer;
+import net.minecraft.item.BannerItem;
 import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
+import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -39,6 +43,7 @@ public class RenderUtil {
             var blockRenderer = mc.getBlockRenderManager();
             var modelRenderer = blockRenderer.getModelRenderer();
             var blockEntityRenderDisatcher = mc.getBlockEntityRenderDispatcher();
+            var entityRenderer = mc.getEntityRenderDispatcher();
             var matrixStack = context.matrixStack();
 
             if (state != null && pos != null) {
@@ -52,27 +57,65 @@ public class RenderUtil {
                 switch (blockRenderType) {
 
                     case MODEL:
-                        blockRenderer.renderBlock(state, pos, mc.world, matrixStack, new VertexConsumerProviderWrapper(mc.getBufferBuilders().getEntityVertexConsumers(),
-                                red, green, blue, Math.round(255 * 0.5f), false, null).getBuffer(RenderLayer.getEntityTranslucentCull(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE)), false, random);
+                        System.out.println(state);
+                        if (state.getBlock() instanceof DoorBlock) {
+                            var state2 = state.with(DoorBlock.HALF, DoubleBlockHalf.UPPER);
+                            var pos2 = pos.offset(Direction.UP);
+
+                            System.out.println(pos);
+                            System.out.println(pos2);
+
+                            blockRenderer.renderBlock(state, pos, mc.world, matrixStack, new VertexConsumerProviderWrapper(mc.getBufferBuilders().getEntityVertexConsumers(),
+                                    red, green, blue, Math.round(255 * 0.5f), false, null).getBuffer(RenderLayer.getEntityTranslucentCull(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE)), false, random);
+
+                            matrixStack.pop();
+                            matrixStack.push();
+                            matrixStack.translate(pos2.getX() - camera.getPos().x, pos2.getY() - camera.getPos().y, pos2.getZ() - camera.getPos().z);
+
+                            blockRenderer.renderBlock(state2, pos2, mc.world, matrixStack, new VertexConsumerProviderWrapper(mc.getBufferBuilders().getEntityVertexConsumers(),
+                                    red, green, blue, Math.round(255 * 0.5f), false, null).getBuffer(RenderLayer.getEntityTranslucentCull(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE)), false, random);
+
+                        } else {
+                            blockRenderer.renderBlock(state, pos, mc.world, matrixStack, new VertexConsumerProviderWrapper(mc.getBufferBuilders().getEntityVertexConsumers(),
+                                    red, green, blue, Math.round(255 * 0.5f), false, null).getBuffer(RenderLayer.getEntityTranslucentCull(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE)), false, random);
+                        }
                         break;
                     case ENTITYBLOCK_ANIMATED:
-                        blockRenderer.renderBlockAsEntity(state, matrixStack, new VertexConsumerProviderWrapper(mc.getBufferBuilders().getEntityVertexConsumers(),
-                                red, green, blue, Math.round(255 * 0.5f), true, getRenderLayerForBlock(state.getBlock())), 0xFFFFFF, OverlayTexture.DEFAULT_UV);
+
+                        if (state.getBlock() instanceof BedBlock) {
+                            var state2 = state.with(BedBlock.PART, BedPart.HEAD);
+                            var pos2 = pos.offset(mc.player.getHorizontalFacing());
+
+                            blockEntityRenderDisatcher.renderEntity(getBlockEntity(state, pos, context.world()), matrixStack, new VertexConsumerProviderWrapper(mc.getBufferBuilders().getEntityVertexConsumers(),
+                                    red, green, blue, Math.round(255 * 0.5f), true, getRenderLayerForBlock(state.getBlock())), 0xFFFFFF, OverlayTexture.DEFAULT_UV);
+
+                            matrixStack.pop();
+                            matrixStack.push();
+                            matrixStack.translate(pos2.getX() - camera.getPos().x, pos2.getY() - camera.getPos().y, pos2.getZ() - camera.getPos().z);
+
+                            blockEntityRenderDisatcher.renderEntity(getBlockEntity(state2, pos2, context.world()), matrixStack, new VertexConsumerProviderWrapper(mc.getBufferBuilders().getEntityVertexConsumers(),
+                                    red, green, blue, Math.round(255 * 0.5f), true, getRenderLayerForBlock(state2.getBlock())), 0xFFFFFF, OverlayTexture.DEFAULT_UV);
+
+                        } else {
+                            blockRenderer.renderBlockAsEntity(state, matrixStack, new VertexConsumerProviderWrapper(mc.getBufferBuilders().getEntityVertexConsumers(),
+                                    red, green, blue, Math.round(255 * 0.5f), true, getRenderLayerForBlock(state.getBlock())), 0xFFFFFF, OverlayTexture.DEFAULT_UV);
+                        }
+
+
                         break;
                     case INVISIBLE:
-                        var blockEntity = getBlockEntityFromBlock(state.getBlock());
-                        if (blockEntity != null) {
-                            /** for banners use {@link BannerBlockEntityRenderer} **/
-                            if (blockEntity instanceof BannerBlockEntity bannerEntity) {
-                                System.out.println("Here");
-                                var bannerRenderer = (BannerBlockEntityRenderer) blockEntityRenderDisatcher.get(bannerEntity);
-                                bannerRenderer.render(bannerEntity, context.tickDelta(), matrixStack, mc.getBufferBuilders().getEntityVertexConsumers(), 0xFFFFFF, OverlayTexture.DEFAULT_UV);
 
-//                                blockEntityRenderDisatcher.renderEntity(bannerEntity, matrixStack, new VertexConsumerProviderWrapper(mc.getBufferBuilders().getEntityVertexConsumers(),
-//                                        red, green, blue, Math.round(255 * 0.5f), true, getRenderLayerForBlock(state.getBlock())), 0xFFFFFF, OverlayTexture.DEFAULT_UV);
-                            } else {
-                                blockEntityRenderDisatcher.renderEntity(blockEntity, matrixStack, new VertexConsumerProviderWrapper(mc.getBufferBuilders().getEntityVertexConsumers(),
-                                        red, green, blue, Math.round(255 * 0.5f), true, getRenderLayerForBlock(state.getBlock())), 0xFFFFFF, OverlayTexture.DEFAULT_UV);
+                        var blockEntity = getBlockEntity(state, pos, context.world());
+                        System.out.println(state);
+                        if (blockEntity != null) {
+                            if (blockEntity instanceof BannerBlockEntity bannerBlockEntity) {
+                                if (mc.player.getMainHandStack().getItem() instanceof BannerItem bannerItem) {
+                                    bannerBlockEntity.readFrom(mc.player.getMainHandStack(), bannerItem.getColor());
+                                    System.out.println(bannerBlockEntity.getPatterns() != null);
+                                    blockEntityRenderDisatcher.renderEntity(blockEntity, matrixStack, new VertexConsumerProviderWrapper(mc.getBufferBuilders().getEntityVertexConsumers(),
+                                            red, green, blue, Math.round(255 * 0.5f), true, getRenderLayerForBlock(state.getBlock())), 0xFFFFFF, OverlayTexture.DEFAULT_UV);
+
+                                }
                             }
 
                         }
@@ -88,10 +131,13 @@ public class RenderUtil {
 
     }
 
+    // Sets the world of the blockEntity as the world is null by default
     @Nullable
-    private static BlockEntity getBlockEntityFromBlock(Block block) {
-        if (block instanceof BlockEntityProvider blockEntityProvider) {
-            return blockEntityProvider.createBlockEntity(pos, state);
+    private static BlockEntity getBlockEntity(BlockState blockState, BlockPos blockPos, World world) {
+        if (blockState.getBlock() instanceof BlockEntityProvider blockEntityProvider) {
+            var blockEntity = blockEntityProvider.createBlockEntity(blockPos, blockState);
+            blockEntity.setWorld(world);
+            return blockEntity;
         }
         return null;
     }
@@ -113,7 +159,6 @@ public class RenderUtil {
         } else if (block instanceof BedBlock) {
             index = 5;
         }
-        System.out.println(index);
         return RenderLayer.getEntityTranslucentCull(renderLayerIdentifiers.get(index));
     }
 

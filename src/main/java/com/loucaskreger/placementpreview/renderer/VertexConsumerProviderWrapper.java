@@ -15,6 +15,7 @@ public class VertexConsumerProviderWrapper implements VertexConsumerProvider {
     private final RenderLayer renderLayer;
 
 
+
     public VertexConsumerProviderWrapper(VertexConsumerProvider inner, int red, int green, int blue, int alpha, boolean overrideRenderLayer, @Nullable RenderLayer layer) {
         this.inner = inner;
         this.red = red;

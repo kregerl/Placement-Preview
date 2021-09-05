@@ -12,6 +12,7 @@ import net.minecraft.block.RailPlacementHelper;
 import net.minecraft.block.enums.RailShape;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
+import net.minecraft.client.render.entity.ItemFrameEntityRenderer;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemPlacementContext;
@@ -52,7 +53,7 @@ public class PlacementPreview implements ModInitializer {
                         var context = new ItemPlacementContext(client.player, client.player.getActiveHand(), heldStack, blockHitResult);
                         var block = blockItem.getBlock();
                         var state = block.getPlacementState(context);
-
+//                        ItemFrameEntityRenderer
 
                         BlockPos placementPos;
                         var targetedBlockMaterial = context.getWorld().getBlockState(blockHitResult.getBlockPos()).getMaterial();
